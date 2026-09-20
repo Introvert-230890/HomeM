@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Личные финансы</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#ea580c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Финансы">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-decor" id="bgDecor" aria-hidden="true"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-window" id="modalWindow"></div>
+</div>
+
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo" id="authSeasonIcon">&#x1F4B0;</div>
+    <div class="auth-title">Личные финансы</div>
+    <div class="auth-sub">Введите данные для входа</div>
+    <div class="auth-field">
+      <label for="authLogin">Логин</label>
+      <input type="text" id="authLogin" placeholder="Евгений" autocomplete="username">
+    </div>
+    <div class="auth-field">
+      <label for="authPassword">Пароль</label>
+      <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="submit-btn auth-btn" id="authBtn">Войти</button>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-hint">Данные хранятся локально в вашем браузере</div>
+  </div>
+</div>
+
+<aside class="sidebar" id="sidebar" style="display:none;">
+  <div class="sidebar-header">
+    <span class="season-icon" id="logoSeasonIcon">&#x1F341;</span>
+    <span class="sidebar-brand">Личные <b>финансы</b></span>
+  </div>
+  <nav class="sidebar-nav">
+    <button data-tab="main" class="active"><span class="nav-icon">&#x1F4CA;</span><span class="nav-text">Бухгалтерия</span></button>
+    <button data-tab="report"><span class="nav-icon">&#x1F4D1;</span><span class="nav-text">Общая таблица</span></button>
+    <button data-tab="history"><span class="nav-icon">&#x1F4CB;</span><span class="nav-text">История</span></button>
+    <button data-tab="accounts"><span class="nav-icon">&#x1F3E6;</span><span class="nav-text">Счета</span></button>
+    <button data-tab="savings"><span class="nav-icon">&#x1F4B0;</span><span class="nav-text">Сбережения</span></button>
+    <button data-tab="investments"><span class="nav-icon">&#x1F4C8;</span><span class="nav-text">Инвестиции</span></button>
+    <button data-tab="projects"><span class="nav-icon">&#x1F3AF;</span><span class="nav-text">Проекты</span></button>
+    <button data-tab="budgets"><span class="nav-icon">&#x1F4D0;</span><span class="nav-text">Бюджеты</span></button>
+    <button data-tab="analytics"><span class="nav-icon">&#x1F4C9;</span><span class="nav-text">Аналитика</span></button>
+    <button data-tab="news"><span class="nav-icon">&#x1F4F0;</span><span class="nav-text">Новости</span></button>
+  </nav>
+  <button class="sidebar-theme-btn" id="themeBtn" title="Переключить тему"><span class="nav-icon" id="themeIcon">&#x1F319;</span><span class="nav-text" id="themeText">Тёмная тема</span></button>
+  <button class="sidebar-theme-btn" id="backupBtn" title="Резервная копия"><span class="nav-icon">&#x1F4BE;</span><span class="nav-text">Резервная копия</span></button>
+  <button class="sidebar-logout" id="logoutBtn" title="Выйти"><span class="nav-icon">&#x1F6AA;</span><span class="nav-text">Выйти</span></button>
+</aside>
+
+<main id="mainContent" style="display:none;">
+
+  <section class="section active" id="tab-main">
+    <h1 class="page-title">Обзор</h1>
+    <p class="page-sub">Доходы, расходы и переводы в сбережения</p>
+
+    <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <label style="margin:0;">Период:</label>
+      <input type="month" id="monthPicker" style="width:auto;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <label style="margin:0;margin-left:8px;">Счёт:</label>
+        <select id="accountFilter" style="width:auto;"><option value="all">Все счета</option></select>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="card"><div class="label">Баланс за месяц</div><div class="value" id="balance">0</div></div>
+      <div class="card"><div class="label">Доходы</div><div class="value income" id="incomeTotal">0</div></div>
+      <div class="card"><div class="label">Расходы</div><div class="value expense" id="expenseTotal">0</div></div>
+    </div>
+
+    <div class="grid-main">
+      <form id="txForm">
+        <div class="card">
+          <div class="type-toggle">
+            <button type="button" data-type="expense" class="active">&minus; Расход</button>
+            <button type="button" data-type="income">+ Доход</button>
+            <button type="button" data-type="save">&rarr; В сбережения</button>
+          </div>
+          <div id="fieldsStd">
+            <div style="margin-bottom:14px;">
+              <label for="category">Категория <button type="button" id="manageCatsBtn" class="mini-btn green" style="margin-left:8px;padding:2px 8px;font-size:10px;">&#x2699;&#xFE0F; Категории</button></label>
+              <select id="category" required></select>
+            </div>
+            <div style="margin-bottom:14px;"><label for="subcategory">Подкатегория</label><select id="subcategory"></select></div>
+            <div style="margin-bottom:14px;">
+              <label for="shop">Магазин / источник</label>
+              <input type="text" id="shop" placeholder="OZON, WB, Пятёрочка..." maxlength="40" list="shopList" autocomplete="off">
+              <datalist id="shopList"></datalist>
+            </div>
+            <div>
+              <label for="account">Счёт</label>
+              <select id="account" required></select>
+              <div class="form-hint" id="accountBalanceHint"></div>
+            </div>
+          </div>
+          <div id="fieldsSave" style="display:none;">
+            <div style="margin-bottom:14px;"><label for="saveFrom">Откуда (обычный счёт)</label><select id="saveFrom"></select></div>
+            <div><label for="saveTo">Куда (счёт сбережения)</label><select id="saveTo"></select></div>
+          </div>
+          <div><label for="amount">Сумма</label><input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00" required></div>
+          <div><label for="date">Дата</label><input type="date" id="date" required></div>
+          <div><label for="note">Заметка</label><input type="text" id="note" placeholder="Комментарий" maxlength="80"></div>
+          <button type="submit" class="submit-btn" id="submitBtn">Добавить операцию</button>
+        </div>
+      </form>
+
+      <div class="charts-col">
+        <div class="card">
+          <div class="chart-title">Соотношение доходов и расходов <span class="sub" id="ratioPeriod"></span></div>
+          <div class="ratio-bars">
+            <div class="ratio-row">
+              <div class="ratio-label">Доходы</div>
+              <div class="ratio-track"><div class="ratio-fill income" id="ratioIncome" style="width:0%"></div></div>
+            </div>
+            <div class="ratio-row">
+              <div class="ratio-label">Расходы</div>
+              <div class="ratio-track"><div class="ratio-fill expense" id="ratioExpense" style="width:0%"></div></div>
+            </div>
+            <div class="ratio-diff" id="ratioDiff"></div>
+          </div>
+        </div>
+        <div class="donuts">
+          <div class="card donut-block">
+            <div class="donut-label">Распределение расходов</div>
+            <div class="donut-wrap">
+              <div class="donut" id="donutExpense"></div>
+              <div class="donut-center" id="donutExpenseCenter">0</div>
+            </div>
+            <div class="legend" id="legendExpense"></div>
+          </div>
+          <div class="card donut-block">
+            <div class="donut-label">Распределение доходов</div>
+            <div class="donut-wrap">
+              <div class="donut" id="donutIncome"></div>
+              <div class="donut-center" id="donutIncomeCenter">0</div>
+            </div>
+            <div class="legend" id="legendIncome"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tab-report">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Общая таблица</h1>
+        <p class="page-sub" style="margin-bottom:0;">Агрегированный отчёт по категориям и подкатегориям</p>
+      </div>
+      <button class="mini-btn green" id="expReportBtn">&#x1F4E5; Экспорт CSV</button>
+    </div>
+    <div class="report-controls">
+      <select id="repType">
+        <option value="expense">Расходы</option>
+        <option value="income">Доходы</option>
+        <option value="all">Доходы и расходы</option>
+      </select>
+      <select id="repPeriod">
+        <option value="month">Месяц</option>
+        <option value="quarter">Квартал</option>
+        <option value="year">Год</option>
+        <option value="all">Всё время</option>
+      </select>
+      <input type="month" id="repMonth" style="display:inline-block;">
+      <button type="button" class="mini-btn" id="repExpandAll">Развернуть все</button>
+      <button type="button" class="mini-btn" id="repCollapseAll">Свернуть все</button>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="report-table" id="reportTable">
+        <thead>
+          <tr>
+            <th>Статья / Подстатья</th>
+            <th class="num">Сумма</th>
+            <th class="num">Доля</th>
+            <th class="num">Кол-во</th>
+            <th class="num">Средний чек</th>
+            <th class="num">К прошлому</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="tab-history">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">История операций</h1>
+        <p class="page-sub" style="margin-bottom:0;">Все операции с фильтрами и поиском</p>
+      </div>
+      <button class="mini-btn green" id="expHistoryBtn">&#x1F4E5; Экспорт CSV</button>
+    </div>
+    <div class="card">
+      <div class="list-header">
+        <h2>Операции <span id="historyCount" style="color:var(--muted);font-weight:400;"></span></h2>
+        <div class="filters">
+          <input type="month" id="hMonth">
+          <select id="hType">
+            <option value="all">Все типы</option>
+            <option value="expense">Расходы</option>
+            <option value="income">Доходы</option>
+            <option value="save">Сбережения</option>
+            <option value="project_expense">Проекты</option>
+          </select>
+          <select id="hCategory"><option value="all">Все категории</option></select>
+          <select id="hAccount"><option value="all">Все счета</option></select>
+          <input type="text" id="hShop" placeholder="Магазин..." list="shopListFilter" style="width:130px;">
+          <datalist id="shopListFilter"></datalist>
+          <input type="text" id="hSearch" placeholder="Поиск по заметке...">
+        </div>
+      </div>
+      <div class="tx-list" id="historyList"></div>
+    </div>
+  </section>
+
+  <section class="section" id="tab-accounts">
+    <h1 class="page-title">Счета и кошельки</h1>
+    <p class="page-sub">Обычные счета: банковские, карты, наличные</p>
+    <div class="accounts-grid" id="accountsGrid"></div>
+    <div class="card">
+      <h2 style="font-size:15px;margin-bottom:14px;">Добавить счёт</h2>
+      <form id="accountForm" class="add-account">
+        <div><label for="accName">Название</label><input type="text" id="accName" placeholder="Тинькофф" required maxlength="30"></div>
+        <div>
+          <label for="accType">Тип</label>
+          <select id="accType">
+            <option value="bank">Банковский счёт</option>
+            <option value="cash">Наличные</option>
+            <option value="card">Карта</option>
+          </select>
+        </div>
+        <div><label for="accInitial">Начальный баланс</label><input type="number" id="accInitial" step="0.01" placeholder="0.00" value="0"></div>
+        <div><label for="accEmoji">Символ</label><input type="text" id="accEmoji" maxlength="4" value="&#x1F3E6;"></div>
+        <button type="submit" class="submit-btn" style="width:auto;padding:10px 20px;margin:0;">Добавить</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section" id="tab-savings">
+    <h1 class="page-title">Сбережения</h1>
+    <p class="page-sub">Вклады, накопительные счета и копилки</p>
+    <div class="summary" style="grid-template-columns:1fr 1fr;">
+      <div class="card"><div class="label">Всего накоплено</div><div class="value savings" id="savingsTotal">0</div></div>
+      <div class="card"><div class="label">Депозитов</div><div class="value" id="savingsCount">0</div></div>
+    </div>
+    <div class="grid-main">
+      <div class="card">
+        <h2 style="font-size:15px;margin-bottom:14px;">Новый депозит</h2>
+        <form id="depositForm" style="display:flex;flex-direction:column;gap:12px;">
+          <div><label for="depName">Название депозита</label><input type="text" id="depName" placeholder="Например, Вклад на 6 месяцев" required maxlength="40"></div>
+          <div><label for="depBank">Банк / где лежит</label><input type="text" id="depBank" placeholder="Например, Сбербанк" maxlength="30"></div>
+          <div>
+            <label for="depType">Тип</label>
+            <select id="depType">
+              <option value="deposit">Вклад</option>
+              <option value="savings">Накопительный счёт</option>
+              <option value="piggy">Копилка</option>
+            </select>
+          </div>
+          <div><label for="depRate">Ставка, % годовых (необязательно)</label><input type="number" id="depRate" step="0.01" min="0" placeholder="0.00"></div>
+          <div><label for="depInitial">Начальная сумма</label><input type="number" id="depInitial" step="0.01" min="0" placeholder="0.00" value="0"></div>
+          <div><label for="depEmoji">Символ</label><input type="text" id="depEmoji" maxlength="4" value="&#x1F4B0;"></div>
+          <button type="submit" class="submit-btn purple">Создать депозит</button>
+        </form>
+      </div>
+      <div class="charts-col">
+        <div class="card">
+          <div class="chart-title">Структура сбережений <span class="sub">по банкам</span></div>
+          <div class="savings-tree" id="savingsTree"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tab-investments">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Инвестиции</h1>
+        <p class="page-sub" style="margin-bottom:0;">Портфели, свободные деньги, доходность и события</p>
+      </div>
+      <button class="mini-btn green" id="expPortfolioBtn">&#x1F4E5; Экспорт портфеля</button>
+    </div>
+    <div class="portfolio-bar">
+      <label for="portfolioSelect">Портфель:</label>
+      <select id="portfolioSelect"></select>
+      <div class="portfolio-actions">
+        <button class="mini-btn green" id="newPortfolioBtn">+ Новый портфель</button>
+        <button class="mini-btn red" id="deletePortfolioBtn">Удалить</button>
+      </div>
+    </div>
+    <div class="summary" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+      <div class="card"><div class="label">Вложено</div><div class="value" id="invInvested">0</div></div>
+      <div class="card"><div class="label">Стоимость портфеля</div><div class="value invest" id="invValue">0</div></div>
+      <div class="card"><div class="label">Прибыль / Убыток</div><div class="value" id="invPL">0</div></div>
+      <div class="card">
+        <div class="label">Свободные деньги <span id="cashHint" style="font-size:11px;opacity:.7;"></span></div>
+        <div class="value" id="invCash">0</div>
+        <div class="cash-actions">
+          <button class="mini-btn green" id="cashDepositBtn">+ Внести</button>
+          <button class="mini-btn red" id="cashWithdrawBtn">− Вывести</button>
+        </div>
+      </div>
+    </div>
+    <div class="account-total-line">Итого на счёте: <b id="invTotalAccount">0 ₽</b></div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="chart-title">Риск-профиль портфеля</div>
+      <div class="risk-level-block" id="riskLevelBlock">
+        <div class="risk-level-left">
+          <div class="risk-level-number" id="riskLevelNumber">—</div>
+          <div class="risk-level-suffix">/ 100</div>
+        </div>
+        <div class="risk-level-right">
+          <div class="risk-level-title">Уровень риска портфеля</div>
+          <div class="risk-level-desc" id="riskLevelDesc">Добавьте активы для оценки</div>
+          <div class="risk-level-bar">
+            <div class="risk-level-bar-fill" id="riskLevelBarFill" style="width:0%"></div>
+          </div>
+          <div class="risk-level-scale">
+            <span>Низкий</span><span>Средний</span><span>Высокий</span><span>Очень высокий</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-profiles-grid" id="riskProfilesGrid">
+        <div class="risk-profile-card" data-level="conservative">
+          <div class="risk-profile-emoji">&#x1F6E1;</div>
+          <div class="risk-profile-name">Консервативный</div>
+          <div class="risk-profile-range">0 – 30</div>
+        </div>
+        <div class="risk-profile-card" data-level="moderate">
+          <div class="risk-profile-emoji">&#x2696;</div>
+          <div class="risk-profile-name">Умеренный</div>
+          <div class="risk-profile-range">30 – 55</div>
+        </div>
+        <div class="risk-profile-card" data-level="aggressive">
+          <div class="risk-profile-emoji">&#x1F680;</div>
+          <div class="risk-profile-name">Агрессивный</div>
+          <div class="risk-profile-range">55 – 75</div>
+        </div>
+        <div class="risk-profile-card" data-level="very-aggressive">
+          <div class="risk-profile-emoji">&#x1F525;</div>
+          <div class="risk-profile-name">Очень агрессивный</div>
+          <div class="risk-profile-range">75 – 100</div>
+        </div>
+      </div>
+      <div class="risk-current" id="riskCurrent">
+        <div class="risk-current-label">Текущий профиль</div>
+        <div class="risk-current-value" id="riskProfileLabel">—</div>
+        <div class="risk-current-marker" id="riskMarker"></div>
+      </div>
+      <div class="risk-stats" id="riskStats"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="chart-title">Прирост портфеля по месяцам</div>
+      <div class="invest-chart-wrap"><canvas id="growthChart"></canvas></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="chart-title">Календарь выплат на год <span class="sub">дивиденды, купоны, амортизация</span></div>
+      <div class="invest-chart-wrap"><canvas id="payoutChart"></canvas></div>
+    </div>
+
+    <div class="grid-main">
+      <div class="card">
+        <h2 style="font-size:15px;margin-bottom:14px;">Новый актив</h2>
+        <form id="assetForm" style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label for="astName">Название (начните вводить для подсказок)</label>
+            <input type="text" id="astName" placeholder="Сбербанк, ОФЗ..." required maxlength="60" list="securitiesList" autocomplete="off">
+            <datalist id="securitiesList"></datalist>
+            <div class="form-hint" id="searchHint">Введите 2+ символа — появятся подсказки с MOEX</div>
+          </div>
+          <div>
+            <label for="astType">Тип</label>
+            <select id="astType">
+              <option value="stock">Акция</option>
+              <option value="bond">Облигация</option>
+              <option value="etf">ETF / фонд</option>
+              <option value="crypto">Криптовалюта</option>
+              <option value="realty">Недвижимость</option>
+              <option value="other">Другое</option>
+            </select>
+          </div>
+          <div><label for="astTicker">Тикер</label><input type="text" id="astTicker" placeholder="SBER" maxlength="20"></div>
+          <div><label for="astIsin">ISIN</label><input type="text" id="astIsin" placeholder="RU0009029540" maxlength="20"></div>
+          <div id="astNominalWrap" style="display:none;">
+            <label for="astNominal">Номинал облигации (₽)</label>
+            <input type="number" id="astNominal" step="1" min="1" placeholder="1000" value="1000">
+            <div class="form-hint">Цена облигации вводится в % от номинала</div>
+          </div>
+          <div><label for="astQty">Количество</label><input type="number" id="astQty" step="0.0001" min="0" placeholder="0"></div>
+          <div><label for="astPrice" id="priceLabel">Средняя цена покупки</label><input type="number" id="astPrice" step="0.01" min="0" placeholder="0.00"></div>
+          <div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text);">
+              <input type="checkbox" id="astFromCash" style="width:auto;">
+              <span>Вычесть стоимость из свободных денег</span>
+            </label>
+          </div>
+          <button type="submit" class="submit-btn orange">Добавить актив</button>
+        </form>
+      </div>
+      <div class="charts-col">
+        <div class="card" style="overflow-x:auto;">
+          <div class="chart-title">
+            <span>Портфель <span class="sub" id="priceStatus"></span></span>
+            <button type="button" class="mini-btn orange" id="refreshPricesBtn">&#x1F504; Обновить цены</button>
+          </div>
+          <table class="invest-table" id="investTable">
+            <thead>
+              <tr>
+                <th>Актив</th>
+                <th>Тип</th>
+                <th>Риск</th>
+                <th class="num">Кол-во</th>
+                <th class="num">Ср. цена</th>
+                <th class="num">Тек. цена</th>
+                <th class="num">Стоимость</th>
+                <th class="num">P&amp;L</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="chart-title">Распределение по типам</div>
+          <div class="donuts">
+            <div class="donut-block" style="flex:1;">
+              <div class="donut-wrap">
+                <div class="donut" id="donutInvest"></div>
+                <div class="donut-center" id="donutInvestCenter">0</div>
+              </div>
+            </div>
+            <div class="legend" id="legendInvest" style="flex:1;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tab-projects">
+    <div id="projectsListView">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h1 class="page-title">Проекты</h1>
+          <p class="page-sub" style="margin-bottom:0;">Целевые накопления и бюджетные траты</p>
+        </div>
+        <button class="submit-btn orange" id="newProjectBtn" style="width:auto;padding:12px 24px;margin:0;">+ Новый проект</button>
+      </div>
+
+      <div id="projectFormWrap" style="display:none;margin-bottom:20px;">
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:14px;">Новый проект</h3>
+          <form id="projectForm" style="display:flex;flex-direction:column;gap:14px;">
+            <div><label for="projName">Название</label><input type="text" id="projName" placeholder="Например, Отпуск в Сочи" required maxlength="60"></div>
+            <div>
+              <label>Тип проекта</label>
+              <div class="type-toggle" style="grid-template-columns:1fr 1fr;">
+                <button type="button" data-ptype="savings" class="active">&#x1F4B0; Накопительный</button>
+                <button type="button" data-ptype="expense">&#x1F4B8; Затратный</button>
+              </div>
+              <div class="form-hint" id="ptypeHint">Накопительный — копите деньги на цель. Затратный — тратите из бюджета по подстатьям.</div>
+            </div>
+            <div>
+              <label for="projAccountMode">Счёт сбережений</label>
+              <select id="projAccountMode">
+                <option value="new">Создать новый депозит</option>
+                <option value="existing">Привязать к существующему</option>
+              </select>
+            </div>
+            <div id="projNewAccountFields">
+              <div style="margin-bottom:12px;"><label for="projAccName">Название депозита</label><input type="text" id="projAccName" placeholder="Например, Копилка на отпуск" maxlength="40"></div>
+              <div><label for="projAccBank">Банк</label><input type="text" id="projAccBank" placeholder="Сбербанк" maxlength="30"></div>
+            </div>
+            <div id="projExistingAccountFields" style="display:none;">
+              <label for="projAccSelect">Выберите счёт сбережений</label>
+              <select id="projAccSelect"></select>
+            </div>
+            <div><label for="projBudget">Бюджет (необязательно)</label><input type="number" id="projBudget" step="0.01" min="0" placeholder="0.00"></div>
+            <div><label for="projDeadline">Срок (необязательно)</label><input type="date" id="projDeadline"></div>
+            <div>
+              <label>Подстатьи</label>
+              <div id="projSubsList"></div>
+              <button type="button" class="mini-btn green" id="addSubBtn">+ Добавить подстатью</button>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="submit" class="submit-btn orange" style="flex:1;">Создать проект</button>
+              <button type="button" class="submit-btn ghost" id="cancelProjBtn" style="flex:1;">Отмена</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="projects-grid" id="projectsList"></div>
+    </div>
+
+    <div id="projectDetailView" style="display:none;"></div>
+  </section>
+
+  <section class="section" id="tab-budgets">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Бюджеты</h1>
+        <p class="page-sub" style="margin-bottom:0;">Лимиты по категориям расходов</p>
+      </div>
+      <button class="mini-btn green" id="openBudgetSettings">&#x2699;&#xFE0F; Настроить бюджеты</button>
+    </div>
+
+    <div class="summary" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="card"><div class="label">Общий бюджет</div><div class="value" id="budgetTotalLimit">0</div></div>
+      <div class="card"><div class="label">Потрачено</div><div class="value expense" id="budgetTotalSpent">0</div></div>
+      <div class="card"><div class="label">Осталось</div><div class="value" id="budgetTotalLeft">0</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="chart-title">Общий прогресс <span class="sub" id="budgetPeriod"></span></div>
+      <div class="budget-progress-bar" style="height:16px;">
+        <div class="budget-progress-fill ok" id="budgetTotalFill" style="width:0%"></div>
+      </div>
+      <div class="budget-meta" style="margin-top:8px;">
+        <span>Прогноз до конца месяца: <b id="budgetTotalForecast">—</b></span>
+        <span id="budgetTotalStatus"></span>
+      </div>
+    </div>
+
+    <div class="budgets-list" id="budgetsList"></div>
+  </section>
+
+  <section class="section" id="tab-analytics">
+    <h1 class="page-title">Аналитика</h1>
+    <p class="page-sub">Динамика по месяцам, капитал и движение сбережений</p>
+    <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
+      <label style="margin:0;">Период:</label>
+      <input type="month" id="aMonth" style="width:auto;">
+    </div>
+    <div class="analytics-grid" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="chart-title">Движение по сбережениям <span class="sub" id="movementPeriod"></span></div>
+        <div class="movement-grid">
+          <div class="movement-card"><div class="label">Пополнено</div><div class="value purple" id="movSavIn">0</div></div>
+          <div class="movement-card"><div class="label">Проценты</div><div class="value green" id="movInterest">0</div></div>
+          <div class="movement-card"><div class="label">Снято</div><div class="value blue" id="movSavOut">0</div></div>
+          <div class="movement-card"><div class="label">Итого прирост</div><div class="value" id="movNet">0</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chart-title">Капитал <span class="sub">на текущий момент</span></div>
+        <div class="capital-block" id="capitalBlock"></div>
+      </div>
+    </div>
+    <div class="analytics-grid">
+      <div class="card">
+        <div class="chart-title">Помесячная динамика</div>
+        <table class="month-table" id="monthTable">
+          <thead>
+            <tr>
+              <th>Месяц</th>
+              <th style="text-align:right;">Доходы</th>
+              <th style="text-align:right;">Расходы</th>
+              <th style="text-align:right;">Баланс</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="chart-title">Топ магазинов <span class="sub">за всё время</span></div>
+        <div class="legend" id="topShopsLegend"></div>
+      </div>
+      <div class="card">
+        <div class="chart-title">Топ категорий расходов <span class="sub">за всё время</span></div>
+        <div class="legend" id="topExpenseLegend"></div>
+      </div>
+      <div class="card">
+        <div class="chart-title">Топ категорий доходов <span class="sub">за всё время</span></div>
+        <div class="legend" id="topIncomeLegend"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tab-news">
+    <h1 class="page-title">Новости и события</h1>
+    <p class="page-sub">Предстоящие и фактические выплаты по вашим активам</p>
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="mini-btn orange" id="refreshNewsBtn">&#x1F504; Обновить события</button>
+        <span id="newsStatus" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+    </div>
+    <div class="news-list" id="newsList"></div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
