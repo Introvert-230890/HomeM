@@ -1,0 +1,20 @@
+{
+  "name": "Личные финансы",
+  "short_name": "Финансы",
+  "description": "Домашняя бухгалтерия, сбережения, инвестиции, бюджеты",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fdf6ec",
+  "theme_color": "#ea580c",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

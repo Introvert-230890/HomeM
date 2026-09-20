@@ -3,643 +3,206 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Домашняя бухгалтерия</title>
-<style>
-  :root {
-    --bg: #f5f7fb;
-    --card: #ffffff;
-    --text: #1a1d29;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --green: #10b981;
-    --red: #ef4444;
-    --accent: #6366f1;
-    --accent-soft: #eef2ff;
-    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-    --shadow-lg: 0 4px 12px rgba(0,0,0,.08);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
-    min-height: 100vh;
-  }
-
-  /* ---------- Header / Nav ---------- */
-  header.top {
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 24px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .top-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
-  }
-  .logo {
-    font-size: 18px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-  }
-  .logo span { color: var(--accent); }
-  nav.tabs {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    flex: 1;
-  }
-  nav.tabs button {
-    border: none;
-    background: transparent;
-    padding: 8px 14px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--muted);
-    transition: all .15s;
-    font-family: inherit;
-  }
-  nav.tabs button:hover { background: var(--bg); color: var(--text); }
-  nav.tabs button.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-
-  main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px 16px 60px;
-  }
-
-  .section { display: none; }
-  .section.active { display: block; animation: fade .25s ease; }
-  @keyframes fade {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  h1.page-title {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .page-sub {
-    color: var(--muted);
-    font-size: 14px;
-    margin-bottom: 20px;
-  }
-
-  .card {
-    background: var(--card);
-    border-radius: 14px;
-    padding: 18px;
-    box-shadow: var(--shadow);
-  }
-
-  /* ---------- Summary ---------- */
-  .summary {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .summary .card .label {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  .summary .card .value {
-    font-size: 22px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-  .value.income { color: var(--green); }
-  .value.expense { color: var(--red); }
-
-  /* ---------- Layout: form + charts ---------- */
-  .grid-main {
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-
-  form .card { display: flex; flex-direction: column; gap: 14px; }
-
-  .type-toggle {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    background: var(--bg);
-    border-radius: 10px;
-    padding: 4px;
-    gap: 4px;
-  }
-  .type-toggle button {
-    border: none;
-    background: transparent;
-    padding: 9px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--muted);
-    transition: all .15s;
-    font-family: inherit;
-  }
-  .type-toggle button.active[data-type="expense"] {
-    background: var(--card); color: var(--red); box-shadow: var(--shadow);
-  }
-  .type-toggle button.active[data-type="income"] {
-    background: var(--card); color: var(--green); box-shadow: var(--shadow);
-  }
-
-  label { font-size: 13px; color: var(--muted); margin-bottom: 5px; display: block; }
-  input, select, textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    font-size: 14px;
-    font-family: inherit;
-    color: var(--text);
-    background: var(--card);
-    outline: none;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-  }
-  select { cursor: pointer; }
-
-  .field-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .submit-btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 4px;
-    transition: all .15s;
-    font-family: inherit;
-  }
-  .submit-btn:hover { background: #4f46e5; }
-  .submit-btn:active { transform: scale(.99); }
-
-  /* ---------- Charts ---------- */
-  .charts-col { display: flex; flex-direction: column; gap: 20px; }
-
-  .chart-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-  .chart-title .sub {
-    font-size: 12px;
-    color: var(--muted);
-    font-weight: 400;
-  }
-
-  /* Ratio bars */
-  .ratio-bars { display: flex; flex-direction: column; gap: 14px; }
-  .ratio-row { display: flex; align-items: center; gap: 12px; }
-  .ratio-label {
-    width: 80px;
-    font-size: 13px;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-  .ratio-track {
-    flex: 1;
-    height: 26px;
-    background: var(--bg);
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-  }
-  .ratio-fill {
-    height: 100%;
-    border-radius: 8px;
-    transition: width .5s cubic-bezier(.4,0,.2,1);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 10px;
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    min-width: 4px;
-  }
-  .ratio-fill.income { background: linear-gradient(90deg, #34d399, var(--green)); }
-  .ratio-fill.expense { background: linear-gradient(90deg, #f87171, var(--red)); }
-  .ratio-diff {
-    margin-top: 6px;
-    font-size: 13px;
-    text-align: center;
-    color: var(--muted);
-  }
-  .ratio-diff b { color: var(--text); }
-
-  /* Donut charts */
-  .donuts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-  .donut-block { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  .donut-wrap {
-    position: relative;
-    width: 160px;
-    height: 160px;
-  }
-  .donut {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: conic-gradient(var(--border) 0% 100%);
-    transition: background .5s;
-  }
-  .donut::after {
-    content: '';
-    position: absolute;
-    inset: 34px;
-    border-radius: 50%;
-    background: var(--card);
-    z-index: 1;
-  }
-  .donut-center {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    z-index: 2;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-  .donut-center small {
-    display: block;
-    font-size: 11px;
-    color: var(--muted);
-    font-weight: 400;
-  }
-  .donut-label {
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .legend {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
-  }
-  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-  .legend-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .legend-value { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-
-  /* ---------- Transactions list ---------- */
-  .list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .list-header h2 { font-size: 16px; font-weight: 600; }
-  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
-  .filters select, .filters input {
-    width: auto;
-    padding: 7px 10px;
-    font-size: 13px;
-  }
-
-  .tx-list { display: flex; flex-direction: column; gap: 8px; }
-  .tx-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    background: var(--card);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    transition: transform .1s, box-shadow .15s;
-  }
-  .tx-item:hover { transform: translateX(2px); box-shadow: var(--shadow-lg); }
-  .tx-emoji {
-    font-size: 20px;
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    background: var(--bg);
-    border-radius: 10px;
-    flex-shrink: 0;
-  }
-  .tx-info { flex: 1; min-width: 0; }
-  .tx-cat { font-size: 14px; font-weight: 500; }
-  .tx-meta {
-    font-size: 12px;
-    color: var(--muted);
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 1px;
-  }
-  .tx-meta .dot { opacity: .4; }
-  .tx-amount {
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
-    min-width: 100px;
-    text-align: right;
-  }
-  .tx-amount.income { color: var(--green); }
-  .tx-amount.expense { color: var(--red); }
-  .tx-delete {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 20px;
-    line-height: 1;
-    padding: 0 4px;
-    opacity: 0;
-    transition: opacity .15s, color .15s;
-    font-family: inherit;
-  }
-  .tx-item:hover .tx-delete { opacity: 1; }
-  .tx-delete:hover { color: var(--red); }
-
-  .empty {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-    font-size: 14px;
-  }
-
-  /* ---------- Accounts ---------- */
-  .accounts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .account-card {
-    background: var(--card);
-    border-radius: 14px;
-    padding: 16px;
-    box-shadow: var(--shadow);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-  }
-  .account-emoji {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    font-size: 20px;
-    flex-shrink: 0;
-    color: white;
-  }
-  .account-info { flex: 1; min-width: 0; }
-  .account-name { font-size: 14px; font-weight: 600; }
-  .account-type { font-size: 12px; color: var(--muted); }
-  .account-delete {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 18px;
-    opacity: 0;
-    transition: opacity .15s, color .15s;
-  }
-  .account-card:hover .account-delete { opacity: 1; }
-  .account-delete:hover { color: var(--red); }
-
-  .add-account {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    gap: 10px;
-    align-items: end;
-  }
-
-  /* ---------- Analytics ---------- */
-  .analytics-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-  .month-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .month-table th, .month-table td {
-    padding: 10px 8px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  .month-table th {
-    font-weight: 600;
-    color: var(--muted);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-  }
-  .month-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .month-table td.income { color: var(--green); font-weight: 500; }
-  .month-table td.expense { color: var(--red); font-weight: 500; }
-  .month-table td.balance { font-weight: 600; }
-
-  /* ---------- Responsive ---------- */
-  @media (max-width: 980px) {
-    .grid-main { grid-template-columns: 1fr; }
-    .analytics-grid { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 640px) {
-    .summary { grid-template-columns: 1fr; }
-    .donuts { grid-template-columns: 1fr; }
-    .tx-meta { display: none; }
-    .tx-amount { min-width: 80px; font-size: 14px; }
-    .add-account { grid-template-columns: 1fr; }
-    header.top { padding: 12px 16px; }
-    .top-inner { gap: 12px; }
-    nav.tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
-  }
-</style>
+<title>Личные финансы</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#ea580c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Финансы">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="top">
-  <div class="top-inner">
-    <div class="logo">?? <span>Домашняя</span> бухгалтерия</div>
-    <nav class="tabs">
-      <button data-tab="main" class="active">?? Бухгалтерия</button>
-      <button data-tab="history">?? История</button>
-      <button data-tab="accounts">?? Счета</button>
-      <button data-tab="analytics">?? Аналитика</button>
-    </nav>
+<div class="bg-decor" id="bgDecor" aria-hidden="true"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-window" id="modalWindow"></div>
+</div>
+
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo" id="authSeasonIcon">&#x1F4B0;</div>
+    <div class="auth-title">Личные финансы</div>
+    <div class="auth-sub">Введите данные для входа</div>
+    <div class="auth-field">
+      <label for="authLogin">Логин</label>
+      <input type="text" id="authLogin" placeholder="Евгений" autocomplete="username">
+    </div>
+    <div class="auth-field">
+      <label for="authPassword">Пароль</label>
+      <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="submit-btn auth-btn" id="authBtn">Войти</button>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-hint">Данные хранятся локально в вашем браузере</div>
   </div>
-</header>
+</div>
 
-<main>
+<aside class="sidebar" id="sidebar" style="display:none;">
+  <div class="sidebar-header">
+    <span class="season-icon" id="logoSeasonIcon">&#x1F341;</span>
+    <span class="sidebar-brand">Личные <b>финансы</b></span>
+  </div>
+  <nav class="sidebar-nav">
+    <button data-tab="main" class="active"><span class="nav-icon">&#x1F4CA;</span><span class="nav-text">Бухгалтерия</span></button>
+    <button data-tab="report"><span class="nav-icon">&#x1F4D1;</span><span class="nav-text">Общая таблица</span></button>
+    <button data-tab="history"><span class="nav-icon">&#x1F4CB;</span><span class="nav-text">История</span></button>
+    <button data-tab="accounts"><span class="nav-icon">&#x1F3E6;</span><span class="nav-text">Счета</span></button>
+    <button data-tab="savings"><span class="nav-icon">&#x1F4B0;</span><span class="nav-text">Сбережения</span></button>
+    <button data-tab="investments"><span class="nav-icon">&#x1F4C8;</span><span class="nav-text">Инвестиции</span></button>
+    <button data-tab="projects"><span class="nav-icon">&#x1F3AF;</span><span class="nav-text">Проекты</span></button>
+    <button data-tab="budgets"><span class="nav-icon">&#x1F4D0;</span><span class="nav-text">Бюджеты</span></button>
+    <button data-tab="analytics"><span class="nav-icon">&#x1F4C9;</span><span class="nav-text">Аналитика</span></button>
+    <button data-tab="news"><span class="nav-icon">&#x1F4F0;</span><span class="nav-text">Новости</span></button>
+  </nav>
+  <button class="sidebar-theme-btn" id="themeBtn" title="Переключить тему"><span class="nav-icon" id="themeIcon">&#x1F319;</span><span class="nav-text" id="themeText">Тёмная тема</span></button>
+  <button class="sidebar-theme-btn" id="backupBtn" title="Резервная копия"><span class="nav-icon">&#x1F4BE;</span><span class="nav-text">Резервная копия</span></button>
+  <button class="sidebar-logout" id="logoutBtn" title="Выйти"><span class="nav-icon">&#x1F6AA;</span><span class="nav-text">Выйти</span></button>
+</aside>
 
-  <!-- ================= РАЗДЕЛ 1: БУХГАЛТЕРИЯ ================= -->
+<main id="mainContent" style="display:none;">
+
   <section class="section active" id="tab-main">
     <h1 class="page-title">Обзор</h1>
-    <p class="page-sub">Внесение доходов и расходов, сводка за выбранный месяц</p>
+    <p class="page-sub">Доходы, расходы и переводы в сбережения</p>
 
     <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <label style="margin:0;">Период:</label>
       <input type="month" id="monthPicker" style="width:auto;">
-      <div id="accountFilterWrap" style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;">
         <label style="margin:0;margin-left:8px;">Счёт:</label>
         <select id="accountFilter" style="width:auto;"><option value="all">Все счета</option></select>
       </div>
     </div>
 
     <div class="summary">
-      <div class="card">
-        <div class="label">Баланс за месяц</div>
-        <div class="value" id="balance">0 ?</div>
-      </div>
-      <div class="card">
-        <div class="label">Доходы</div>
-        <div class="value income" id="incomeTotal">0 ?</div>
-      </div>
-      <div class="card">
-        <div class="label">Расходы</div>
-        <div class="value expense" id="expenseTotal">0 ?</div>
-      </div>
+      <div class="card"><div class="label">Баланс за месяц</div><div class="value" id="balance">0</div></div>
+      <div class="card"><div class="label">Доходы</div><div class="value income" id="incomeTotal">0</div></div>
+      <div class="card"><div class="label">Расходы</div><div class="value expense" id="expenseTotal">0</div></div>
     </div>
 
     <div class="grid-main">
-      <!-- Форма -->
       <form id="txForm">
         <div class="card">
           <div class="type-toggle">
-            <button type="button" data-type="expense" class="active">? Расход</button>
+            <button type="button" data-type="expense" class="active">&minus; Расход</button>
             <button type="button" data-type="income">+ Доход</button>
+            <button type="button" data-type="save">&rarr; В сбережения</button>
           </div>
-
-          <div>
-            <label for="amount">Сумма</label>
-            <input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00" required>
+          <div id="fieldsStd">
+            <div style="margin-bottom:14px;">
+              <label for="category">Категория <button type="button" id="manageCatsBtn" class="mini-btn green" style="margin-left:8px;padding:2px 8px;font-size:10px;">&#x2699;&#xFE0F; Категории</button></label>
+              <select id="category" required></select>
+            </div>
+            <div style="margin-bottom:14px;"><label for="subcategory">Подкатегория</label><select id="subcategory"></select></div>
+            <div style="margin-bottom:14px;">
+              <label for="shop">Магазин / источник</label>
+              <input type="text" id="shop" placeholder="OZON, WB, Пятёрочка..." maxlength="40" list="shopList" autocomplete="off">
+              <datalist id="shopList"></datalist>
+            </div>
+            <div>
+              <label for="account">Счёт</label>
+              <select id="account" required></select>
+              <div class="form-hint" id="accountBalanceHint"></div>
+            </div>
           </div>
-
-          <div>
-            <label for="category">Категория</label>
-            <select id="category" required></select>
+          <div id="fieldsSave" style="display:none;">
+            <div style="margin-bottom:14px;"><label for="saveFrom">Откуда (обычный счёт)</label><select id="saveFrom"></select></div>
+            <div><label for="saveTo">Куда (счёт сбережения)</label><select id="saveTo"></select></div>
           </div>
-
-          <div>
-            <label for="subcategory">Подкатегория</label>
-            <select id="subcategory"></select>
-          </div>
-
-          <div>
-            <label for="account">Источник / Счёт</label>
-            <select id="account" required></select>
-          </div>
-
-          <div>
-            <label for="date">Дата</label>
-            <input type="date" id="date" required>
-          </div>
-
-          <div>
-            <label for="note">Заметка (необязательно)</label>
-            <input type="text" id="note" placeholder="Например, обед в кафе" maxlength="80">
-          </div>
-
-          <button type="submit" class="submit-btn">Добавить операцию</button>
+          <div><label for="amount">Сумма</label><input type="number" id="amount" min="0.01" step="0.01" placeholder="0.00" required></div>
+          <div><label for="date">Дата</label><input type="date" id="date" required></div>
+          <div><label for="note">Заметка</label><input type="text" id="note" placeholder="Комментарий" maxlength="80"></div>
+          <button type="submit" class="submit-btn" id="submitBtn">Добавить операцию</button>
         </div>
       </form>
 
-      <!-- Графики -->
       <div class="charts-col">
-
         <div class="card">
-          <div class="chart-title">
-            Соотношение доходов и расходов
-            <span class="sub" id="ratioPeriod"></span>
-          </div>
+          <div class="chart-title">Соотношение доходов и расходов <span class="sub" id="ratioPeriod"></span></div>
           <div class="ratio-bars">
             <div class="ratio-row">
               <div class="ratio-label">Доходы</div>
-              <div class="ratio-track">
-                <div class="ratio-fill income" id="ratioIncome" style="width:0%"></div>
-              </div>
+              <div class="ratio-track"><div class="ratio-fill income" id="ratioIncome" style="width:0%"></div></div>
             </div>
             <div class="ratio-row">
               <div class="ratio-label">Расходы</div>
-              <div class="ratio-track">
-                <div class="ratio-fill expense" id="ratioExpense" style="width:0%"></div>
-              </div>
+              <div class="ratio-track"><div class="ratio-fill expense" id="ratioExpense" style="width:0%"></div></div>
             </div>
             <div class="ratio-diff" id="ratioDiff"></div>
           </div>
         </div>
-
         <div class="donuts">
           <div class="card donut-block">
-            <div class="donut-label">?? Распределение расходов</div>
+            <div class="donut-label">Распределение расходов</div>
             <div class="donut-wrap">
               <div class="donut" id="donutExpense"></div>
-              <div class="donut-center" id="donutExpenseCenter">0 ?</div>
+              <div class="donut-center" id="donutExpenseCenter">0</div>
             </div>
             <div class="legend" id="legendExpense"></div>
           </div>
-
           <div class="card donut-block">
-            <div class="donut-label">?? Распределение доходов</div>
+            <div class="donut-label">Распределение доходов</div>
             <div class="donut-wrap">
               <div class="donut" id="donutIncome"></div>
-              <div class="donut-center" id="donutIncomeCenter">0 ?</div>
+              <div class="donut-center" id="donutIncomeCenter">0</div>
             </div>
             <div class="legend" id="legendIncome"></div>
           </div>
         </div>
-
       </div>
     </div>
   </section>
 
-  <!-- ================= РАЗДЕЛ 2: ИСТОРИЯ ================= -->
-  <section class="section" id="tab-history">
-    <h1 class="page-title">История операций</h1>
-    <p class="page-sub">Все операции с фильтрами и поиском</p>
+  <section class="section" id="tab-report">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Общая таблица</h1>
+        <p class="page-sub" style="margin-bottom:0;">Агрегированный отчёт по категориям и подкатегориям</p>
+      </div>
+      <button class="mini-btn green" id="expReportBtn">&#x1F4E5; Экспорт CSV</button>
+    </div>
+    <div class="report-controls">
+      <select id="repType">
+        <option value="expense">Расходы</option>
+        <option value="income">Доходы</option>
+        <option value="all">Доходы и расходы</option>
+      </select>
+      <select id="repPeriod">
+        <option value="month">Месяц</option>
+        <option value="quarter">Квартал</option>
+        <option value="year">Год</option>
+        <option value="all">Всё время</option>
+      </select>
+      <input type="month" id="repMonth" style="display:inline-block;">
+      <button type="button" class="mini-btn" id="repExpandAll">Развернуть все</button>
+      <button type="button" class="mini-btn" id="repCollapseAll">Свернуть все</button>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="report-table" id="reportTable">
+        <thead>
+          <tr>
+            <th>Статья / Подстатья</th>
+            <th class="num">Сумма</th>
+            <th class="num">Доля</th>
+            <th class="num">Кол-во</th>
+            <th class="num">Средний чек</th>
+            <th class="num">К прошлому</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
 
+  <section class="section" id="tab-history">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">История операций</h1>
+        <p class="page-sub" style="margin-bottom:0;">Все операции с фильтрами и поиском</p>
+      </div>
+      <button class="mini-btn green" id="expHistoryBtn">&#x1F4E5; Экспорт CSV</button>
+    </div>
     <div class="card">
       <div class="list-header">
         <h2>Операции <span id="historyCount" style="color:var(--muted);font-weight:400;"></span></h2>
@@ -647,11 +210,15 @@
           <input type="month" id="hMonth">
           <select id="hType">
             <option value="all">Все типы</option>
-            <option value="expense">Только расходы</option>
-            <option value="income">Только доходы</option>
+            <option value="expense">Расходы</option>
+            <option value="income">Доходы</option>
+            <option value="save">Сбережения</option>
+            <option value="project_expense">Проекты</option>
           </select>
           <select id="hCategory"><option value="all">Все категории</option></select>
           <select id="hAccount"><option value="all">Все счета</option></select>
+          <input type="text" id="hShop" placeholder="Магазин..." list="shopListFilter" style="width:130px;">
+          <datalist id="shopListFilter"></datalist>
           <input type="text" id="hSearch" placeholder="Поиск по заметке...">
         </div>
       </div>
@@ -659,43 +226,342 @@
     </div>
   </section>
 
-  <!-- ================= РАЗДЕЛ 3: СЧЕТА ================= -->
   <section class="section" id="tab-accounts">
     <h1 class="page-title">Счета и кошельки</h1>
-    <p class="page-sub">Банковские счета и наличные средства</p>
-
+    <p class="page-sub">Обычные счета: банковские, карты, наличные</p>
     <div class="accounts-grid" id="accountsGrid"></div>
-
     <div class="card">
       <h2 style="font-size:15px;margin-bottom:14px;">Добавить счёт</h2>
       <form id="accountForm" class="add-account">
-        <div>
-          <label for="accName">Название</label>
-          <input type="text" id="accName" placeholder="Например, Тинькофф" required maxlength="30">
-        </div>
+        <div><label for="accName">Название</label><input type="text" id="accName" placeholder="Тинькофф" required maxlength="30"></div>
         <div>
           <label for="accType">Тип</label>
           <select id="accType">
-            <option value="bank">?? Банковский счёт</option>
-            <option value="cash">?? Наличные</option>
-            <option value="card">?? Карта</option>
-            <option value="savings">?? Накопления</option>
+            <option value="bank">Банковский счёт</option>
+            <option value="cash">Наличные</option>
+            <option value="card">Карта</option>
           </select>
         </div>
-        <div>
-          <label for="accEmoji">Эмодзи</label>
-          <input type="text" id="accEmoji" placeholder="??" maxlength="4" value="??">
-        </div>
+        <div><label for="accInitial">Начальный баланс</label><input type="number" id="accInitial" step="0.01" placeholder="0.00" value="0"></div>
+        <div><label for="accEmoji">Символ</label><input type="text" id="accEmoji" maxlength="4" value="&#x1F3E6;"></div>
         <button type="submit" class="submit-btn" style="width:auto;padding:10px 20px;margin:0;">Добавить</button>
       </form>
     </div>
   </section>
 
-  <!-- ================= РАЗДЕЛ 4: АНАЛИТИКА ================= -->
+  <section class="section" id="tab-savings">
+    <h1 class="page-title">Сбережения</h1>
+    <p class="page-sub">Вклады, накопительные счета и копилки</p>
+    <div class="summary" style="grid-template-columns:1fr 1fr;">
+      <div class="card"><div class="label">Всего накоплено</div><div class="value savings" id="savingsTotal">0</div></div>
+      <div class="card"><div class="label">Депозитов</div><div class="value" id="savingsCount">0</div></div>
+    </div>
+    <div class="grid-main">
+      <div class="card">
+        <h2 style="font-size:15px;margin-bottom:14px;">Новый депозит</h2>
+        <form id="depositForm" style="display:flex;flex-direction:column;gap:12px;">
+          <div><label for="depName">Название депозита</label><input type="text" id="depName" placeholder="Например, Вклад на 6 месяцев" required maxlength="40"></div>
+          <div><label for="depBank">Банк / где лежит</label><input type="text" id="depBank" placeholder="Например, Сбербанк" maxlength="30"></div>
+          <div>
+            <label for="depType">Тип</label>
+            <select id="depType">
+              <option value="deposit">Вклад</option>
+              <option value="savings">Накопительный счёт</option>
+              <option value="piggy">Копилка</option>
+            </select>
+          </div>
+          <div><label for="depRate">Ставка, % годовых (необязательно)</label><input type="number" id="depRate" step="0.01" min="0" placeholder="0.00"></div>
+          <div><label for="depInitial">Начальная сумма</label><input type="number" id="depInitial" step="0.01" min="0" placeholder="0.00" value="0"></div>
+          <div><label for="depEmoji">Символ</label><input type="text" id="depEmoji" maxlength="4" value="&#x1F4B0;"></div>
+          <button type="submit" class="submit-btn purple">Создать депозит</button>
+        </form>
+      </div>
+      <div class="charts-col">
+        <div class="card">
+          <div class="chart-title">Структура сбережений <span class="sub">по банкам</span></div>
+          <div class="savings-tree" id="savingsTree"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tab-investments">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Инвестиции</h1>
+        <p class="page-sub" style="margin-bottom:0;">Портфели, свободные деньги, доходность и события</p>
+      </div>
+      <button class="mini-btn green" id="expPortfolioBtn">&#x1F4E5; Экспорт портфеля</button>
+    </div>
+    <div class="portfolio-bar">
+      <label for="portfolioSelect">Портфель:</label>
+      <select id="portfolioSelect"></select>
+      <div class="portfolio-actions">
+        <button class="mini-btn green" id="newPortfolioBtn">+ Новый портфель</button>
+        <button class="mini-btn red" id="deletePortfolioBtn">Удалить</button>
+      </div>
+    </div>
+    <div class="summary" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+      <div class="card"><div class="label">Вложено</div><div class="value" id="invInvested">0</div></div>
+      <div class="card"><div class="label">Стоимость портфеля</div><div class="value invest" id="invValue">0</div></div>
+      <div class="card"><div class="label">Прибыль / Убыток</div><div class="value" id="invPL">0</div></div>
+      <div class="card">
+        <div class="label">Свободные деньги <span id="cashHint" style="font-size:11px;opacity:.7;"></span></div>
+        <div class="value" id="invCash">0</div>
+        <div class="cash-actions">
+          <button class="mini-btn green" id="cashDepositBtn">+ Внести</button>
+          <button class="mini-btn red" id="cashWithdrawBtn">− Вывести</button>
+        </div>
+      </div>
+    </div>
+    <div class="account-total-line">Итого на счёте: <b id="invTotalAccount">0 ₽</b></div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="chart-title">Риск-профиль портфеля</div>
+      <div class="risk-level-block" id="riskLevelBlock">
+        <div class="risk-level-left">
+          <div class="risk-level-number" id="riskLevelNumber">—</div>
+          <div class="risk-level-suffix">/ 100</div>
+        </div>
+        <div class="risk-level-right">
+          <div class="risk-level-title">Уровень риска портфеля</div>
+          <div class="risk-level-desc" id="riskLevelDesc">Добавьте активы для оценки</div>
+          <div class="risk-level-bar">
+            <div class="risk-level-bar-fill" id="riskLevelBarFill" style="width:0%"></div>
+          </div>
+          <div class="risk-level-scale">
+            <span>Низкий</span><span>Средний</span><span>Высокий</span><span>Очень высокий</span>
+          </div>
+        </div>
+      </div>
+      <div class="risk-profiles-grid" id="riskProfilesGrid">
+        <div class="risk-profile-card" data-level="conservative">
+          <div class="risk-profile-emoji">&#x1F6E1;</div>
+          <div class="risk-profile-name">Консервативный</div>
+          <div class="risk-profile-range">0 – 30</div>
+        </div>
+        <div class="risk-profile-card" data-level="moderate">
+          <div class="risk-profile-emoji">&#x2696;</div>
+          <div class="risk-profile-name">Умеренный</div>
+          <div class="risk-profile-range">30 – 55</div>
+        </div>
+        <div class="risk-profile-card" data-level="aggressive">
+          <div class="risk-profile-emoji">&#x1F680;</div>
+          <div class="risk-profile-name">Агрессивный</div>
+          <div class="risk-profile-range">55 – 75</div>
+        </div>
+        <div class="risk-profile-card" data-level="very-aggressive">
+          <div class="risk-profile-emoji">&#x1F525;</div>
+          <div class="risk-profile-name">Очень агрессивный</div>
+          <div class="risk-profile-range">75 – 100</div>
+        </div>
+      </div>
+      <div class="risk-current" id="riskCurrent">
+        <div class="risk-current-label">Текущий профиль</div>
+        <div class="risk-current-value" id="riskProfileLabel">—</div>
+        <div class="risk-current-marker" id="riskMarker"></div>
+      </div>
+      <div class="risk-stats" id="riskStats"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="chart-title">Прирост портфеля по месяцам</div>
+      <div class="invest-chart-wrap"><canvas id="growthChart"></canvas></div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="chart-title">Календарь выплат на год <span class="sub">дивиденды, купоны, амортизация</span></div>
+      <div class="invest-chart-wrap"><canvas id="payoutChart"></canvas></div>
+    </div>
+
+    <div class="grid-main">
+      <div class="card">
+        <h2 style="font-size:15px;margin-bottom:14px;">Новый актив</h2>
+        <form id="assetForm" style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label for="astName">Название (начните вводить для подсказок)</label>
+            <input type="text" id="astName" placeholder="Сбербанк, ОФЗ..." required maxlength="60" list="securitiesList" autocomplete="off">
+            <datalist id="securitiesList"></datalist>
+            <div class="form-hint" id="searchHint">Введите 2+ символа — появятся подсказки с MOEX</div>
+          </div>
+          <div>
+            <label for="astType">Тип</label>
+            <select id="astType">
+              <option value="stock">Акция</option>
+              <option value="bond">Облигация</option>
+              <option value="etf">ETF / фонд</option>
+              <option value="crypto">Криптовалюта</option>
+              <option value="realty">Недвижимость</option>
+              <option value="other">Другое</option>
+            </select>
+          </div>
+          <div><label for="astTicker">Тикер</label><input type="text" id="astTicker" placeholder="SBER" maxlength="20"></div>
+          <div><label for="astIsin">ISIN</label><input type="text" id="astIsin" placeholder="RU0009029540" maxlength="20"></div>
+          <div id="astNominalWrap" style="display:none;">
+            <label for="astNominal">Номинал облигации (₽)</label>
+            <input type="number" id="astNominal" step="1" min="1" placeholder="1000" value="1000">
+            <div class="form-hint">Цена облигации вводится в % от номинала</div>
+          </div>
+          <div><label for="astQty">Количество</label><input type="number" id="astQty" step="0.0001" min="0" placeholder="0"></div>
+          <div><label for="astPrice" id="priceLabel">Средняя цена покупки</label><input type="number" id="astPrice" step="0.01" min="0" placeholder="0.00"></div>
+          <div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text);">
+              <input type="checkbox" id="astFromCash" style="width:auto;">
+              <span>Вычесть стоимость из свободных денег</span>
+            </label>
+          </div>
+          <button type="submit" class="submit-btn orange">Добавить актив</button>
+        </form>
+      </div>
+      <div class="charts-col">
+        <div class="card" style="overflow-x:auto;">
+          <div class="chart-title">
+            <span>Портфель <span class="sub" id="priceStatus"></span></span>
+            <button type="button" class="mini-btn orange" id="refreshPricesBtn">&#x1F504; Обновить цены</button>
+          </div>
+          <table class="invest-table" id="investTable">
+            <thead>
+              <tr>
+                <th>Актив</th>
+                <th>Тип</th>
+                <th>Риск</th>
+                <th class="num">Кол-во</th>
+                <th class="num">Ср. цена</th>
+                <th class="num">Тек. цена</th>
+                <th class="num">Стоимость</th>
+                <th class="num">P&amp;L</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="chart-title">Распределение по типам</div>
+          <div class="donuts">
+            <div class="donut-block" style="flex:1;">
+              <div class="donut-wrap">
+                <div class="donut" id="donutInvest"></div>
+                <div class="donut-center" id="donutInvestCenter">0</div>
+              </div>
+            </div>
+            <div class="legend" id="legendInvest" style="flex:1;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tab-projects">
+    <div id="projectsListView">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h1 class="page-title">Проекты</h1>
+          <p class="page-sub" style="margin-bottom:0;">Целевые накопления и бюджетные траты</p>
+        </div>
+        <button class="submit-btn orange" id="newProjectBtn" style="width:auto;padding:12px 24px;margin:0;">+ Новый проект</button>
+      </div>
+
+      <div id="projectFormWrap" style="display:none;margin-bottom:20px;">
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:14px;">Новый проект</h3>
+          <form id="projectForm" style="display:flex;flex-direction:column;gap:14px;">
+            <div><label for="projName">Название</label><input type="text" id="projName" placeholder="Например, Отпуск в Сочи" required maxlength="60"></div>
+            <div>
+              <label>Тип проекта</label>
+              <div class="type-toggle" style="grid-template-columns:1fr 1fr;">
+                <button type="button" data-ptype="savings" class="active">&#x1F4B0; Накопительный</button>
+                <button type="button" data-ptype="expense">&#x1F4B8; Затратный</button>
+              </div>
+              <div class="form-hint" id="ptypeHint">Накопительный — копите деньги на цель. Затратный — тратите из бюджета по подстатьям.</div>
+            </div>
+            <div>
+              <label for="projAccountMode">Счёт сбережений</label>
+              <select id="projAccountMode">
+                <option value="new">Создать новый депозит</option>
+                <option value="existing">Привязать к существующему</option>
+              </select>
+            </div>
+            <div id="projNewAccountFields">
+              <div style="margin-bottom:12px;"><label for="projAccName">Название депозита</label><input type="text" id="projAccName" placeholder="Например, Копилка на отпуск" maxlength="40"></div>
+              <div><label for="projAccBank">Банк</label><input type="text" id="projAccBank" placeholder="Сбербанк" maxlength="30"></div>
+            </div>
+            <div id="projExistingAccountFields" style="display:none;">
+              <label for="projAccSelect">Выберите счёт сбережений</label>
+              <select id="projAccSelect"></select>
+            </div>
+            <div><label for="projBudget">Бюджет (необязательно)</label><input type="number" id="projBudget" step="0.01" min="0" placeholder="0.00"></div>
+            <div><label for="projDeadline">Срок (необязательно)</label><input type="date" id="projDeadline"></div>
+            <div>
+              <label>Подстатьи</label>
+              <div id="projSubsList"></div>
+              <button type="button" class="mini-btn green" id="addSubBtn">+ Добавить подстатью</button>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="submit" class="submit-btn orange" style="flex:1;">Создать проект</button>
+              <button type="button" class="submit-btn ghost" id="cancelProjBtn" style="flex:1;">Отмена</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="projects-grid" id="projectsList"></div>
+    </div>
+
+    <div id="projectDetailView" style="display:none;"></div>
+  </section>
+
+  <section class="section" id="tab-budgets">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Бюджеты</h1>
+        <p class="page-sub" style="margin-bottom:0;">Лимиты по категориям расходов</p>
+      </div>
+      <button class="mini-btn green" id="openBudgetSettings">&#x2699;&#xFE0F; Настроить бюджеты</button>
+    </div>
+
+    <div class="summary" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="card"><div class="label">Общий бюджет</div><div class="value" id="budgetTotalLimit">0</div></div>
+      <div class="card"><div class="label">Потрачено</div><div class="value expense" id="budgetTotalSpent">0</div></div>
+      <div class="card"><div class="label">Осталось</div><div class="value" id="budgetTotalLeft">0</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="chart-title">Общий прогресс <span class="sub" id="budgetPeriod"></span></div>
+      <div class="budget-progress-bar" style="height:16px;">
+        <div class="budget-progress-fill ok" id="budgetTotalFill" style="width:0%"></div>
+      </div>
+      <div class="budget-meta" style="margin-top:8px;">
+        <span>Прогноз до конца месяца: <b id="budgetTotalForecast">—</b></span>
+        <span id="budgetTotalStatus"></span>
+      </div>
+    </div>
+
+    <div class="budgets-list" id="budgetsList"></div>
+  </section>
+
   <section class="section" id="tab-analytics">
     <h1 class="page-title">Аналитика</h1>
-    <p class="page-sub">Динамика по месяцам и детальная статистика</p>
-
+    <p class="page-sub">Динамика по месяцам, капитал и движение сбережений</p>
+    <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;">
+      <label style="margin:0;">Период:</label>
+      <input type="month" id="aMonth" style="width:auto;">
+    </div>
+    <div class="analytics-grid" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="chart-title">Движение по сбережениям <span class="sub" id="movementPeriod"></span></div>
+        <div class="movement-grid">
+          <div class="movement-card"><div class="label">Пополнено</div><div class="value purple" id="movSavIn">0</div></div>
+          <div class="movement-card"><div class="label">Проценты</div><div class="value green" id="movInterest">0</div></div>
+          <div class="movement-card"><div class="label">Снято</div><div class="value blue" id="movSavOut">0</div></div>
+          <div class="movement-card"><div class="label">Итого прирост</div><div class="value" id="movNet">0</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chart-title">Капитал <span class="sub">на текущий момент</span></div>
+        <div class="capital-block" id="capitalBlock"></div>
+      </div>
+    </div>
     <div class="analytics-grid">
       <div class="card">
         <div class="chart-title">Помесячная динамика</div>
@@ -711,601 +577,35 @@
           <tbody></tbody>
         </table>
       </div>
-
+      <div class="card">
+        <div class="chart-title">Топ магазинов <span class="sub">за всё время</span></div>
+        <div class="legend" id="topShopsLegend"></div>
+      </div>
       <div class="card">
         <div class="chart-title">Топ категорий расходов <span class="sub">за всё время</span></div>
         <div class="legend" id="topExpenseLegend"></div>
       </div>
-
       <div class="card">
         <div class="chart-title">Топ категорий доходов <span class="sub">за всё время</span></div>
         <div class="legend" id="topIncomeLegend"></div>
       </div>
+    </div>
+  </section>
 
-      <div class="card">
-        <div class="chart-title">Расходы по счетам <span class="sub">за всё время</span></div>
-        <div class="legend" id="accountExpenseLegend"></div>
+  <section class="section" id="tab-news">
+    <h1 class="page-title">Новости и события</h1>
+    <p class="page-sub">Предстоящие и фактические выплаты по вашим активам</p>
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="mini-btn orange" id="refreshNewsBtn">&#x1F504; Обновить события</button>
+        <span id="newsStatus" style="font-size:12px;color:var(--muted);"></span>
       </div>
     </div>
+    <div class="news-list" id="newsList"></div>
   </section>
 
 </main>
 
-<script>
-/* =====================================================
-   КАТЕГОРИИ С ПОДКАТЕГОРИЯМИ
-   ===================================================== */
-const CATEGORIES = {
-  expense: [
-    { id: 'food',    name: 'Продукты',        emoji: '??', color: '#ef4444', sub: ['Супермаркет', 'Рынок', 'Доставка'] },
-    { id: 'cafe',    name: 'Кафе и рестораны',emoji: '??', color: '#f97316', sub: ['Кафе', 'Ресторан', 'Фастфуд', 'Кофе'] },
-    { id: 'transport',name:'Транспорт',       emoji: '??', color: '#eab308', sub: ['Общественный', 'Такси', 'Топливо', 'Парковка'] },
-    { id: 'home',    name: 'Жильё',           emoji: '??', color: '#22c55e', sub: ['Аренда', 'Коммуналка', 'Ремонт', 'Мебель'] },
-    { id: 'health',  name: 'Здоровье',        emoji: '??', color: '#06b6d4', sub: ['Аптека', 'Врач', 'Анализы', 'Спорт'] },
-    { id: 'clothes', name: 'Одежда',          emoji: '??', color: '#3b82f6', sub: ['Одежда', 'Обувь', 'Аксессуары'] },
-    { id: 'fun',     name: 'Развлечения',     emoji: '??', color: '#8b5cf6', sub: ['Кино', 'Концерты', 'Хобби', 'Подписки'] },
-    { id: 'edu',     name: 'Образование',     emoji: '??', color: '#a855f7', sub: ['Курсы', 'Книги', 'Семинары'] },
-    { id: 'comm',    name: 'Связь',           emoji: '??', color: '#0ea5e9', sub: ['Мобильная связь', 'Интернет', 'ТВ'] },
-    { id: 'other_e', name: 'Прочее',          emoji: '??', color: '#94a3b8', sub: ['Подарки', 'Прочее'] },
-  ],
-  income: [
-    { id: 'salary',   name: 'Зарплата',    emoji: '??', color: '#10b981', sub: ['Основная', 'Премия', 'Аванс'] },
-    { id: 'freelance',name: 'Фриланс',     emoji: '??', color: '#06b6d4', sub: ['Проекты', 'Консультации'] },
-    { id: 'invest',   name: 'Инвестиции',  emoji: '??', color: '#8b5cf6', sub: ['Дивиденды', 'Проценты', 'Продажа'] },
-    { id: 'gift',     name: 'Подарки',     emoji: '??', color: '#f59e0b', sub: ['Подарок', 'Возврат долга', 'Кэшбэк'] },
-    { id: 'other_i',  name: 'Прочее',      emoji: '?', color: '#94a3b8', sub: ['Прочее'] },
-  ]
-};
-
-const ACCOUNT_TYPES = {
-  bank:    { name: 'Банковский счёт', color: '#6366f1' },
-  cash:    { name: 'Наличные',        color: '#10b981' },
-  card:    { name: 'Карта',           color: '#f59e0b' },
-  savings: { name: 'Накопления',      color: '#8b5cf6' },
-};
-
-/* =====================================================
-   СОСТОЯНИЕ И ХРАНЕНИЕ
-   ===================================================== */
-const STORAGE_TX = 'home-accounting-tx-v2';
-const STORAGE_ACC = 'home-accounting-acc-v2';
-
-let transactions = JSON.parse(localStorage.getItem(STORAGE_TX) || '[]');
-let accounts = JSON.parse(localStorage.getItem(STORAGE_ACC) || 'null') || [
-  { id: 'cash',  name: 'Наличные',   type: 'cash', emoji: '??' },
-  { id: 'sber',  name: 'Сбербанк',   type: 'bank', emoji: '??' },
-  { id: 'tink',  name: 'Тинькофф',   type: 'bank', emoji: '??' },
-];
-
-const state = {
-  formType: 'expense',
-  month: new Date().toISOString().slice(0, 7),
-  accountFilter: 'all',
-  activeTab: 'main',
-};
-
-const saveTx = () => localStorage.setItem(STORAGE_TX, JSON.stringify(transactions));
-const saveAcc = () => localStorage.setItem(STORAGE_ACC, JSON.stringify(accounts));
-
-/* =====================================================
-   ХЕЛПЕРЫ
-   ===================================================== */
-const $ = id => document.getElementById(id);
-const fmt = n => n.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) + ' ?';
-const fmtDate = iso => new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-const fmtMonth = ym => {
-  const [y, m] = ym.split('-');
-  return new Date(y, m - 1, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
-};
-const findCat = (type, id) => CATEGORIES[type].find(c => c.id === id)
-  || { name: id, emoji: '?', color: '#94a3b8' };
-const findAcc = id => accounts.find(a => a.id === id)
-  || { name: 'Удалён', emoji: '?', color: '#94a3b8', type: 'cash' };
-const escapeHtml = s => String(s).replace(/[&<>"']/g,
-  m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-
-/* =====================================================
-   ФИЛЬТРАЦИЯ
-   ===================================================== */
-function getMonthTransactions() {
-  return transactions.filter(t => {
-    if (t.date.slice(0, 7) !== state.month) return false;
-    if (state.accountFilter !== 'all' && t.accountId !== state.accountFilter) return false;
-    return true;
-  });
-}
-
-/* =====================================================
-   РЕНДЕР: сводка
-   ===================================================== */
-function renderSummary() {
-  const tx = getMonthTransactions();
-  const inc = tx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const exp = tx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-  const bal = inc - exp;
-
-  $('incomeTotal').textContent = fmt(inc);
-  $('expenseTotal').textContent = fmt(exp);
-  const el = $('balance');
-  el.textContent = fmt(bal);
-  el.className = 'value' + (bal > 0 ? ' income' : bal < 0 ? ' expense' : '');
-}
-
-/* =====================================================
-   РЕНДЕР: график соотношения
-   ===================================================== */
-function renderRatio() {
-  const tx = getMonthTransactions();
-  const inc = tx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const exp = tx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-  const max = Math.max(inc, exp, 1);
-
-  const incBar = $('ratioIncome');
-  const expBar = $('ratioExpense');
-  incBar.style.width = (inc / max * 100) + '%';
-  expBar.style.width = (exp / max * 100) + '%';
-  incBar.textContent = inc > 0 ? fmt(inc) : '';
-  expBar.textContent = exp > 0 ? fmt(exp) : '';
-
-  $('ratioPeriod').textContent = fmtMonth(state.month);
-
-  const diff = inc - exp;
-  if (inc === 0 && exp === 0) {
-    $('ratioDiff').innerHTML = 'За этот месяц операций нет';
-  } else if (diff > 0) {
-    $('ratioDiff').innerHTML = `Профицит: <b style="color:var(--green)">+${fmt(diff)}</b>`;
-  } else if (diff < 0) {
-    $('ratioDiff').innerHTML = `Дефицит: <b style="color:var(--red)">${fmt(diff)}</b>`;
-  } else {
-    $('ratioDiff').innerHTML = `Баланс сведён к нулю`;
-  }
-}
-
-/* =====================================================
-   РЕНДЕР: круговая диаграмма
-   ===================================================== */
-function renderDonut(type, donutId, centerId, legendId, centerLabel) {
-  const tx = getMonthTransactions().filter(t => t.type === type);
-  const donut = $(donutId);
-  const legend = $(legendId);
-  const center = $(centerId);
-
-  if (!tx.length) {
-    donut.style.background = 'conic-gradient(var(--border) 0% 100%)';
-    center.innerHTML = `0 ?<small>${centerLabel}</small>`;
-    legend.innerHTML = '<div class="empty" style="padding:10px 0;">Пока нет данных</div>';
-    return;
-  }
-
-  const byCat = {};
-  tx.forEach(t => { byCat[t.category] = (byCat[t.category] || 0) + t.amount; });
-  const total = Object.values(byCat).reduce((s, v) => s + v, 0);
-
-  const entries = Object.entries(byCat)
-    .map(([id, sum]) => ({ id, sum, ...findCat(type, id) }))
-    .sort((a, b) => b.sum - a.sum);
-
-  let acc = 0;
-  const segs = entries.map(e => {
-    const start = acc;
-    acc += (e.sum / total) * 100;
-    return `${e.color} ${start}% ${acc}%`;
-  });
-  donut.style.background = `conic-gradient(${segs.join(', ')})`;
-  center.innerHTML = `${fmt(total)}<small>${centerLabel}</small>`;
-
-  legend.innerHTML = entries.slice(0, 6).map(e => `
-    <div class="legend-item">
-      <span class="legend-dot" style="background:${e.color}"></span>
-      <span class="legend-name">${e.emoji} ${escapeHtml(e.name)}</span>
-      <span class="legend-value">${Math.round(e.sum / total * 100)}%</span>
-    </div>
-  `).join('');
-}
-
-/* =====================================================
-   РЕНДЕР: карточка операции
-   ===================================================== */
-function txItemHTML(t) {
-  const cat = findCat(t.type, t.category);
-  const acc = findAcc(t.accountId);
-  const sign = t.type === 'income' ? '+' : '?';
-  const sub = t.subcategory ? `<span class="dot">•</span><span>${escapeHtml(t.subcategory)}</span>` : '';
-  const note = t.note ? `<span class="dot">•</span><span>${escapeHtml(t.note)}</span>` : '';
-  return `
-    <div class="tx-item">
-      <div class="tx-emoji">${cat.emoji}</div>
-      <div class="tx-info">
-        <div class="tx-cat">${escapeHtml(cat.name)}</div>
-        <div class="tx-meta">
-          <span>${acc.emoji} ${escapeHtml(acc.name)}</span>
-          ${sub}${note}
-        </div>
-      </div>
-      <div class="tx-amount ${t.type}">${sign}${fmt(t.amount)}</div>
-      <button class="tx-delete" data-id="${t.id}" title="Удалить">?</button>
-    </div>
-  `;
-}
-
-/* =====================================================
-   ФОРМА: категории и подкатегории
-   ===================================================== */
-function renderFormCategories() {
-  const catSel = $('category');
-  catSel.innerHTML = CATEGORIES[state.formType]
-    .map(c => `<option value="${c.id}">${c.emoji} ${c.name}</option>`)
-    .join('');
-  renderFormSubcategories();
-}
-
-function renderFormSubcategories() {
-  const catId = $('category').value;
-  const cat = findCat(state.formType, catId);
-  const subs = cat.sub || [];
-  $('subcategory').innerHTML = subs.length
-    ? subs.map(s => `<option value="${s}">${s}</option>`).join('')
-    : '<option value="">—</option>';
-}
-
-function renderFormAccounts() {
-  const sel = $('account');
-  if (!accounts.length) {
-    sel.innerHTML = '<option value="">— добавьте счёт —</option>';
-    return;
-  }
-  sel.innerHTML = accounts.map(a =>
-    `<option value="${a.id}">${a.emoji} ${escapeHtml(a.name)}</option>`
-  ).join('');
-}
-
-/* =====================================================
-   РЕНДЕР: фильтры
-   ===================================================== */
-function renderFilterCategories() {
-  const all = [
-    ...CATEGORIES.expense.map(c => ({...c, type: 'expense'})),
-    ...CATEGORIES.income.map(c => ({...c, type: 'income'})),
-  ];
-  $('hCategory').innerHTML = '<option value="all">Все категории</option>' +
-    all.map(c => `<option value="${c.id}">${c.emoji} ${c.name}</option>`).join('');
-}
-
-function renderFilterAccounts() {
-  const opts = '<option value="all">Все счета</option>' +
-    accounts.map(a => `<option value="${a.id}">${a.emoji} ${escapeHtml(a.name)}</option>`).join('');
-  $('accountFilter').innerHTML = opts;
-  $('hAccount').innerHTML = opts;
-}
-
-/* =====================================================
-   РАЗДЕЛ: История
-   ===================================================== */
-function renderHistory() {
-  const month = $('hMonth').value;
-  const type = $('hType').value;
-  const cat = $('hCategory').value;
-  const acc = $('hAccount').value;
-  const search = $('hSearch').value.trim().toLowerCase();
-
-  let items = transactions.slice();
-  if (month) items = items.filter(t => t.date.slice(0, 7) === month);
-  if (type !== 'all') items = items.filter(t => t.type === type);
-  if (cat !== 'all') items = items.filter(t => t.category === cat);
-  if (acc !== 'all') items = items.filter(t => t.accountId === acc);
-  if (search) items = items.filter(t => (t.note || '').toLowerCase().includes(search));
-
-  items.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-
-  $('historyCount').textContent = `· ${items.length}`;
-  const list = $('historyList');
-  if (!items.length) {
-    list.innerHTML = '<div class="empty">Операций по выбранным фильтрам нет</div>';
-    return;
-  }
-
-  // Группировка по дате
-  const groups = {};
-  items.forEach(t => { (groups[t.date] = groups[t.date] || []).push(t); });
-
-  list.innerHTML = Object.keys(groups).sort().reverse().map(date => {
-    const dayTx = groups[date];
-    const dayInc = dayTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const dayExp = dayTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const dateLabel = new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-    return `
-      <div style="margin-top:8px;">
-        <div style="font-size:12px;color:var(--muted);padding:8px 4px 4px;display:flex;justify-content:space-between;">
-          <span>${dateLabel}</span>
-          <span>${dayInc ? `<span style="color:var(--green)">+${fmt(dayInc)}</span>` : ''} ${dayExp ? `<span style="color:var(--red)">?${fmt(dayExp)}</span>` : ''}</span>
-        </div>
-        ${dayTx.map(txItemHTML).join('')}
-      </div>
-    `;
-  }).join('');
-}
-
-/* =====================================================
-   РАЗДЕЛ: Счета
-   ===================================================== */
-function renderAccounts() {
-  const grid = $('accountsGrid');
-  if (!accounts.length) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;">Счетов пока нет. Добавьте первый ниже ??</div>';
-    return;
-  }
-  grid.innerHTML = accounts.map(a => {
-    const type = ACCOUNT_TYPES[a.type] || ACCOUNT_TYPES.cash;
-    return `
-      <div class="account-card">
-        <div class="account-emoji" style="background:${type.color}">${a.emoji}</div>
-        <div class="account-info">
-          <div class="account-name">${escapeHtml(a.name)}</div>
-          <div class="account-type">${type.name}</div>
-        </div>
-        <button class="account-delete" data-id="${a.id}" title="Удалить">?</button>
-      </div>
-    `;
-  }).join('');
-}
-
-/* =====================================================
-   РАЗДЕЛ: Аналитика
-   ===================================================== */
-function renderAnalytics() {
-  // Таблица по месяцам
-  const byMonth = {};
-  transactions.forEach(t => {
-    const m = t.date.slice(0, 7);
-    byMonth[m] = byMonth[m] || { inc: 0, exp: 0 };
-    if (t.type === 'income') byMonth[m].inc += t.amount;
-    else byMonth[m].exp += t.amount;
-  });
-
-  const months = Object.keys(byMonth).sort().reverse().slice(0, 12);
-  const tbody = $('monthTable').querySelector('tbody');
-  if (!months.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px;">Пока нет данных</td></tr>';
-  } else {
-    tbody.innerHTML = months.map(m => {
-      const { inc, exp } = byMonth[m];
-      const bal = inc - exp;
-      return `<tr>
-        <td>${fmtMonth(m)}</td>
-        <td class="num income">${inc ? '+' + fmt(inc) : '—'}</td>
-        <td class="num expense">${exp ? '?' + fmt(exp) : '—'}</td>
-        <td class="num balance" style="color:${bal > 0 ? 'var(--green)' : bal < 0 ? 'var(--red)' : 'var(--muted)'}">${fmt(bal)}</td>
-      </tr>`;
-    }).join('');
-  }
-
-  // Топ категорий
-  renderTopList('topExpenseLegend', 'expense');
-  renderTopList('topIncomeLegend', 'income');
-
-  // Расходы по счетам
-  const byAcc = {};
-  transactions.filter(t => t.type === 'expense').forEach(t => {
-    byAcc[t.accountId] = (byAcc[t.accountId] || 0) + t.amount;
-  });
-  const accEntries = Object.entries(byAcc)
-    .map(([id, sum]) => ({ sum, ...findAcc(id) }))
-    .sort((a, b) => b.sum - a.sum);
-  const accTotal = accEntries.reduce((s, e) => s + e.sum, 0);
-  const accLegend = $('accountExpenseLegend');
-  if (!accEntries.length) {
-    accLegend.innerHTML = '<div class="empty" style="padding:20px 0;">Пока нет данных</div>';
-  } else {
-    accLegend.innerHTML = accEntries.map(e => {
-      const pct = Math.round(e.sum / accTotal * 100);
-      const type = ACCOUNT_TYPES[e.type] || ACCOUNT_TYPES.cash;
-      return `
-        <div class="legend-item" style="padding:8px 0;border-bottom:1px solid var(--border);">
-          <span class="legend-dot" style="background:${type.color}"></span>
-          <span class="legend-name"><b>${e.emoji} ${escapeHtml(e.name)}</b></span>
-          <span class="legend-value">${fmt(e.sum)} · ${pct}%</span>
-        </div>
-      `;
-    }).join('');
-  }
-}
-
-function renderTopList(elId, type) {
-  const byCat = {};
-  transactions.filter(t => t.type === type).forEach(t => {
-    byCat[t.category] = (byCat[t.category] || 0) + t.amount;
-  });
-  const entries = Object.entries(byCat)
-    .map(([id, sum]) => ({ id, sum, ...findCat(type, id) }))
-    .sort((a, b) => b.sum - a.sum);
-  const total = entries.reduce((s, e) => s + e.sum, 0);
-  const el = $(elId);
-  if (!entries.length) {
-    el.innerHTML = '<div class="empty" style="padding:20px 0;">Пока нет данных</div>';
-    return;
-  }
-  el.innerHTML = entries.map((e, i) => {
-    const pct = Math.round(e.sum / total * 100);
-    return `
-      <div style="padding:8px 0;border-bottom:1px solid var(--border);">
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
-          <span>${i + 1}. ${e.emoji} ${escapeHtml(e.name)}</span>
-          <span style="color:var(--muted);font-variant-numeric:tabular-nums;">${fmt(e.sum)} · ${pct}%</span>
-        </div>
-        <div style="height:6px;background:var(--bg);border-radius:3px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${e.color};border-radius:3px;transition:width .4s;"></div>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-/* =====================================================
-   ОБЩИЙ РЕНДЕР
-   ===================================================== */
-function renderAll() {
-  renderSummary();
-  renderRatio();
-  renderDonut('expense', 'donutExpense', 'donutExpenseCenter', 'legendExpense', 'расходов');
-  renderDonut('income', 'donutIncome', 'donutIncomeCenter', 'legendIncome', 'доходов');
-}
-
-function renderEverything() {
-  renderAll();
-  renderHistory();
-  renderAccounts();
-  renderAnalytics();
-}
-
-/* =====================================================
-   ПЕРЕКЛЮЧЕНИЕ ТАБОВ
-   ===================================================== */
-document.querySelectorAll('nav.tabs button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const tab = btn.dataset.tab;
-    state.activeTab = tab;
-    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b === btn));
-    document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + tab));
-    if (tab === 'history') renderHistory();
-    if (tab === 'accounts') renderAccounts();
-    if (tab === 'analytics') renderAnalytics();
-  });
-});
-
-/* =====================================================
-   ФОРМА: тип, категории, подкатегории
-   ===================================================== */
-document.querySelectorAll('.type-toggle button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.type-toggle button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.formType = btn.dataset.type;
-    renderFormCategories();
-  });
-});
-
-$('category').addEventListener('change', renderFormSubcategories);
-
-/* =====================================================
-   ФОРМА: отправка
-   ===================================================== */
-$('txForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const amount = parseFloat($('amount').value);
-  if (!amount || amount <= 0) return;
-  if (!$('account').value) { alert('Сначала добавьте счёт в разделе «Счета»'); return; }
-
-  transactions.push({
-    id: Date.now(),
-    type: state.formType,
-    amount,
-    category: $('category').value,
-    subcategory: $('subcategory').value,
-    accountId: $('account').value,
-    date: $('date').value,
-    note: $('note').value.trim(),
-  });
-  saveTx();
-
-  $('amount').value = '';
-  $('note').value = '';
-  $('amount').focus();
-
-  const txMonth = $('date').value.slice(0, 7);
-  if (txMonth !== state.month) {
-    state.month = txMonth;
-    $('monthPicker').value = txMonth;
-  }
-  renderEverything();
-});
-
-/* =====================================================
-   ФИЛЬТР ПО МЕСЯЦУ И СЧЁТУ
-   ===================================================== */
-$('monthPicker').addEventListener('change', () => {
-  state.month = $('monthPicker').value;
-  renderAll();
-});
-$('accountFilter').addEventListener('change', () => {
-  state.accountFilter = $('accountFilter').value;
-  renderAll();
-});
-
-/* =====================================================
-   ИСТОРИЯ: фильтры
-   ===================================================== */
-['hMonth','hType','hCategory','hAccount'].forEach(id => {
-  $(id).addEventListener('change', renderHistory);
-});
-$('hSearch').addEventListener('input', renderHistory);
-
-/* =====================================================
-   УДАЛЕНИЕ ОПЕРАЦИИ
-   ===================================================== */
-document.addEventListener('click', e => {
-  const btn = e.target.closest('.tx-delete');
-  if (!btn) return;
-  const id = Number(btn.dataset.id);
-  if (!confirm('Удалить эту операцию?')) return;
-  transactions = transactions.filter(t => t.id !== id);
-  saveTx();
-  renderEverything();
-});
-
-/* =====================================================
-   СЧЕТА: добавление и удаление
-   ===================================================== */
-$('accountForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const name = $('accName').value.trim();
-  if (!name) return;
-  const id = 'acc_' + Date.now();
-  accounts.push({
-    id,
-    name,
-    type: $('accType').value,
-    emoji: $('accEmoji').value.trim() || '??',
-  });
-  saveAcc();
-  $('accName').value = '';
-  $('accEmoji').value = '??';
-  renderFormAccounts();
-  renderFilterAccounts();
-  renderAccounts();
-});
-
-$('accountsGrid').addEventListener('click', e => {
-  const btn = e.target.closest('.account-delete');
-  if (!btn) return;
-  const id = btn.dataset.id;
-  const used = transactions.some(t => t.accountId === id);
-  if (used) {
-    if (!confirm('По этому счёту есть операции. Удалить счёт? Операции останутся, но счёт будет помечен как «Удалён».')) return;
-  } else if (!confirm('Удалить счёт?')) return;
-  accounts = accounts.filter(a => a.id !== id);
-  saveAcc();
-  renderFormAccounts();
-  renderFilterAccounts();
-  renderAccounts();
-});
-
-/* =====================================================
-   ИНИЦИАЛИЗАЦИЯ
-   ===================================================== */
-function init() {
-  const today = new Date().toISOString().slice(0, 10);
-  $('date').value = today;
-  $('monthPicker').value = state.month;
-  $('hMonth').value = state.month;
-
-  renderFormCategories();
-  renderFormAccounts();
-  renderFilterCategories();
-  renderFilterAccounts();
-  renderEverything();
-}
-
-init();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
